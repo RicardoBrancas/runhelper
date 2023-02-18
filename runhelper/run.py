@@ -44,7 +44,17 @@ class Runner:
         else:
             raise FileNotFoundError('Path to runsolver is invalid.')
 
-        self.csv_out_file = csv_out_file
+        if not os.path.isfile(csv_out_file):
+            self.csv_out_file = csv_out_file
+            self.previous_instances = set()
+        else:
+            self.csv_out_file = csv_out_file
+            self.previous_instances = set()
+            with open(self.csv_out_file, newline='') as f:
+                reader = csv.reader(f)
+                next(reader)  # consume header
+                for row in reader:
+                    self.previous_instances.add(row[0])
 
         self.timeout = timeout
         self.memout = memout
@@ -61,6 +71,7 @@ class Runner:
         self.instance_callback = None
         self.columns = OrderedSet()
         self.rows = []
+        self.has_skipped = False
 
     def register_instance_callback(self, callback: Callable[[str, dict, str], None]):
         """Register a callback to be called after each instance finishes running.
@@ -97,6 +108,11 @@ class Runner:
 
     def schedule(self, instance_id, args, output_file):
         """Schedule an instance for running when there are processes available in the pool"""
+        if instance_id in self.previous_instances:
+            if not self.has_skipped:
+                print('Skipping instances already found in ' + self.csv_out_file)
+                self.has_skipped = True
+            return
         result = self.pool.apply_async(run, (instance_id, self.base_command, args, output_file), callback=self._process)
         self.async_results.append(result)
 

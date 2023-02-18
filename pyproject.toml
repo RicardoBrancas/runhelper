@@ -10,7 +10,7 @@ exclude = [
 
 [project]
 name = "runhelper"
-version = "0.1.1"
+version = "0.1.2"
 authors = [
     { name = "Ricardo Brancas", email = "ricardo.brancas@tecnico.ulisboa.pt" },
 ]
@@ -21,3 +21,6 @@ requires-python = ">=3.10"
 dependencies = [
     "ordered-set"
 ]
+
+[project.urls]
+repository = "https://github.com/RicardoBrancas/runhelper"

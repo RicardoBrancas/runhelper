@@ -4,7 +4,7 @@ import signal
 import time
 from typing import Any, Union, Optional, Callable
 
-logger: Optional[logging.Logger] = None
+logger = logging.getLogger()
 
 tags = {}
 tags_helper = {}
@@ -19,7 +19,7 @@ def init_logger(logger_name: str):
 
 
 def register_sigterm_handler(callback: Optional[Callable] = None):
-    """Register a SIGTERM signal handler that will log tags that have been registered as at_exit tags.
+    """Register a SIGTERM signal handler that will log tags that have been set as at_exit tags.
        Optionally receives a callback that will also be called during the SIGTERM event."""
     global sigterm_callback
     sigterm_callback = callback
@@ -28,8 +28,6 @@ def register_sigterm_handler(callback: Optional[Callable] = None):
 
 def log_any(tag: str, value: Any):
     """Log an arbitrary value for the given tag"""
-    if logger is None:
-        raise RuntimeError('You must call runhelper.init_logger before calling log functions.')
     logger.info(f'runhelper.{tag}=%s', str(value))
 
 
@@ -65,7 +63,8 @@ def create_float_tag(tag: str, at_exit_print: bool = True):
 
 
 def timer_start(tag: str):
-    """Start a timer for the given tag."""
+    """Start a timer for the given tag.
+       If the tag does not exist, create a new float tag with that name."""
     if tag not in tags:
         create_float_tag(tag)
     tags_helper[tag] = time.perf_counter_ns()
@@ -80,7 +79,8 @@ def timer_stop(tag: str):
 
 
 def tag_increment(tag: str, value: Union[int, float] = 1):
-    """Increment the given tag by an arbitrary number (by default 1)."""
+    """Increment the given tag by an arbitrary number (by default 1).
+       If the tag does not exist, create a new integer tag with that name."""
     if tag not in tags:
         create_int_tag(tag)
     tags[tag] += value
