@@ -7,6 +7,8 @@ import subprocess
 from typing import Callable
 
 from ordered_set import OrderedSet
+from tqdm import tqdm
+from tqdm.contrib.telegram import tqdm_telegram
 
 
 def run(instance_id, base_command, command, output_file):
@@ -38,7 +40,7 @@ def run(instance_id, base_command, command, output_file):
 
 class Runner:
 
-    def __init__(self, runsolver_path: str, csv_out_file: str, timeout: int = None, memout: int = None, termination_wait_time: int = 5, pool_size: int = 1):
+    def __init__(self, runsolver_path: str, csv_out_file: str, timeout: int = None, memout: int = None, termination_wait_time: int = 5, pool_size: int = 1, desc: str = None, token=None, chat_id=None):
         if os.path.isfile(runsolver_path):
             self.runsolver_path = runsolver_path
         else:
@@ -66,6 +68,11 @@ class Runner:
         if memout is not None:
             self.base_command += ['--rss-swap-limit', str(self.memout)]
 
+        if token is not None and chat_id is not None:
+            self.tqdm = tqdm_telegram(total=0, desc=desc, smoothing=0.1, token=token, chat_id=chat_id)
+        else:
+            self.tqdm = tqdm(total=0, smoothing=0.1, desc=desc)
+
         self.pool = multiprocessing.Pool(pool_size)
         self.async_results = []
         self.instance_callback = None
@@ -84,6 +91,8 @@ class Runner:
         if self.instance_callback:
             self.instance_callback(instance_id, instance_data, output_file)
 
+        self.tqdm.update()
+
         if not all(map(lambda k: k in self.columns, instance_data.keys())):
             print('New tag found. Re-printing data.')
             for key in instance_data.keys():
@@ -95,7 +104,10 @@ class Runner:
                 writer.writerow(self.columns)
                 writer.writerows(self.rows)
 
-            os.remove(self.csv_out_file)
+            try:
+                os.remove(self.csv_out_file)
+            except FileNotFoundError:
+                pass
             os.rename(self.csv_out_file + '_', self.csv_out_file)
 
         row = tuple(instance_data.get(key, None) for key in self.columns)
@@ -115,8 +127,16 @@ class Runner:
             return
         result = self.pool.apply_async(run, (instance_id, self.base_command, args, output_file), callback=self._process)
         self.async_results.append(result)
+        self.tqdm.total += 1
+        self.tqdm.refresh()
 
     def wait(self):
         """Wait for all the currently scheduled instances to finish executing"""
+
         for result in self.async_results:
             result.wait()
+
+        self.pool.close()
+        self.pool.join()
+
+        self.tqdm.close()

@@ -10,7 +10,7 @@ exclude = [
 
 [project]
 name = "runhelper"
-version = "0.1.2"
+version = "0.2.3"
 authors = [
     { name = "Ricardo Brancas", email = "ricardo.brancas@tecnico.ulisboa.pt" },
 ]
@@ -19,7 +19,8 @@ readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.10"
 dependencies = [
-    "ordered-set"
+    "ordered-set",
+    "tqdm"
 ]
 
 [project.urls]

@@ -12,8 +12,8 @@ Timer tags are used to time specific parts of your code.
 
 ```
 runhelper.timer_start('my.tag')
-time_sensit_code1()
-time_sensit_code2()
+time_sensitive_code1()
+time_sensitive_code2()
 runhelper.timer_stop('my.tag')
 ```
 
@@ -21,7 +21,7 @@ Times are accumulated during the execution of your tool.
 
 #### Counter tags
 
-Counter tags are used to count events
+Counter tags are used to count events.
 
 ```
 runhelper.tag_increment('my.tag')
